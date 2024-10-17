@@ -108,25 +108,22 @@ const createRule = async (req, res) => {
             return res.status(400).json({ message: 'Invalid or empty rule string' });
         }
 
-        if (ruleString.length > 1000) { // Example limit
-            return res.status(400).json({ message: 'Rule string too long' });
-        }
-
-        // Check if a rule with the same string already exists
-        const existingRule = await Node.findOne({ ruleString });
-        if (existingRule) {
-            return res.status(409).json({ 
-                message: 'Rule already exists', 
-                node: existingRule 
-            });
-        }
-
         // Parse the rule string and create the AST
         try {
             const ast = parseRuleString(ruleString);
+            
+            // Verify AST structure
+            if (!verifyASTStructure(ast)) {
+                return res.status(400).json({ message: 'Invalid rule structure' });
+            }
+
             // Save the AST to the database
             const savedNode = await Node.create({ ruleString, ast });
-            res.status(201).json({ message: 'Rule created successfully', node: savedNode });
+            res.status(201).json({ 
+                message: 'Rule created successfully', 
+                node: savedNode,
+                ast: ast // Include AST in response for verification
+            });
         } catch (parseError) {
             return res.status(400).json({ message: 'Invalid rule syntax', error: parseError.message });
         }
@@ -134,6 +131,16 @@ const createRule = async (req, res) => {
         console.error('Error creating rule:', error);
         res.status(500).json({ message: 'Error creating rule', error: error.message });
     }
+};
+
+const verifyASTStructure = (ast) => {
+    if (ast.type === 'operand') {
+        return ast.value && ast.value.field && ast.value.comparator && 'value' in ast.value;
+    } else if (ast.type === 'operator') {
+        return ast.value && ast.left && ast.right && 
+               verifyASTStructure(ast.left) && verifyASTStructure(ast.right);
+    }
+    return false;
 };
 
 
