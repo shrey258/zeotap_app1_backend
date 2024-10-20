@@ -4,6 +4,7 @@ const connectDB = require('./config/database');
 const errorHandler = require('./middleware/errorHandler');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpecs = require('./swagger');
+const cors = require('cors');
 
 // Load environment variables
 dotenv.config();
@@ -12,7 +13,7 @@ dotenv.config();
 connectDB();
 
 const app = express();
-
+app.use(cors());
 app.use(express.json());
 
 // Swagger documentation route

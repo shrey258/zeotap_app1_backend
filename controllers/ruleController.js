@@ -32,32 +32,60 @@ const createRule = async (req, res) => {
 
 const combineRules = async (req, res) => {
     try {
-        const { rules, operator = 'OR' } = req.body; // Default to 'OR' if not provided
+        const { rules: ruleIds, operator } = req.body;
         
-        // Fetch existing rule strings from the database
-        const ruleStrings = await Promise.all(rules.map(async (ruleId) => {
-            const rule = await Rule.findById(ruleId);
-            return rule.ruleString;
-        }));
-
-        // Combine rules using the utility function
-        const combinedAst = combine_rules(ruleStrings, operator);
-        const combinedRuleString = JSON.stringify(combinedAst);
-
-        // Check if the combined rule already exists in the database
-        const existingCombinedRule = await Rule.findOne({ ruleString: combinedRuleString });
-        if (existingCombinedRule) {
-            return res.status(400).json({ message: 'Combined rule already exists' });
+        // Validate input
+        if (!ruleIds || !Array.isArray(ruleIds) || ruleIds.length === 0) {
+            return res.status(400).json({ message: 'Invalid or empty rules array.' });
         }
 
-        // Create and save the new combined rule
+        if (operator !== 'AND' && operator !== 'OR') {
+            return res.status(400).json({ message: 'Invalid operator. Must be AND or OR.' });
+        }
+
+        // Retrieve rules based on the provided rule IDs
+        const rules = await Promise.all(ruleIds.map(async (ruleId) => {
+            const rule = await Rule.findById(ruleId);
+            if (!rule) {
+                throw new Error(`Rule with ID ${ruleId} not found`);
+            }
+            return rule.ruleString; // Return only the ruleString
+        }));
+
+        // Check if we have valid rules
+        if (rules.length === 0) {
+            return res.status(400).json({ message: 'No valid rules found for the provided IDs.' });
+        }
+
+        // Combine rules and generate the combined AST and rule string
+        const { ast: combinedAst, ruleString: combinedRuleString } = combine_rules(rules, operator);
+
+        // Check for duplicate rule
+        const existingRule = await Rule.findOne({ ruleString: combinedRuleString });
+        if (existingRule) {
+            return res.status(400).json({ message: 'Duplicate rule. This rule already exists.' });
+        }
+
+        // Save the new rule in the database
         const newRule = new Rule({ ruleString: combinedRuleString, ast: combinedAst });
         await newRule.save();
-        res.status(200).json({ message: 'Rules combined successfully', rule: newRule });
+
+        res.status(200).json({
+            message: 'Rules combined successfully',
+            rule: {
+                ruleString: newRule.ruleString,
+                ast: newRule.ast,
+                _id: newRule._id,
+                createdAt: newRule.createdAt,
+                __v: newRule.__v
+            }
+        });
     } catch (error) {
+        console.error('Error combining rules:', error);
         res.status(400).json({ message: 'Error combining rules', error: error.message });
     }
 };
+
 
 
 

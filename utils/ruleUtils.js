@@ -16,7 +16,7 @@ class Node {
  * @returns {Node} The root node of the AST.
  */
 const create_rule = (rule_string) => {
-    const tokens = rule_string.match(/\(|\)|\w+|[<>=!]+|"[^"]*"|'[^']*'/g);
+    const tokens = rule_string.match(/\(|\)|\w+|[<>=!]+|"[^"]*"|'[^']*'|\d+/g);
     
     const buildAST = () => {
         if (tokens.length === 0) return null;
@@ -37,34 +37,50 @@ const create_rule = (rule_string) => {
 
         const field = tokens.shift();
         const comparator = tokens.shift();
-        const value = tokens.shift().replace(/['"]/g, '');
+        let value = tokens.shift().replace(/['"]/g, '');
+        
+        // Convert value to number if it's numeric
+        if (!isNaN(value)) {
+            value = Number(value);
+        }
+        
         return new Node('operand', { field, comparator, value });
     };
 
     return buildAST();
 };
 
-const combine_rules = (rules) => {
+const astToString = (node) => {
+    if (node.type === 'operand') {
+        const { field, comparator, value } = node.value;
+        return `${field} ${comparator} ${typeof value === 'string' ? `'${value}'` : value}`;
+    } else if (node.type === 'operator') {
+        const left = astToString(node.left);
+        const right = astToString(node.right);
+        return `(${left} ${node.value} ${right})`;
+    }
+    throw new Error('Invalid AST node type');
+};
+
+
+const combine_rules = (rules, operator) => {
     if (rules.length === 0) return null;
     if (rules.length === 1) return create_rule(rules[0]);
 
-    // Count operator frequencies
-    const operatorCount = { 'AND': 0, 'OR': 0 };
-    rules.forEach(rule => {
-        const ast = create_rule(rule);
-        countOperators(ast, operatorCount);
-    });
-
-    // Choose the most frequent operator
-    const mainOperator = operatorCount['AND'] >= operatorCount['OR'] ? 'AND' : 'OR';
-
-    // Combine rules
+    // Combine rules using the provided operator
     const combinedAST = rules.map(create_rule).reduce((acc, curr) => {
-        return new Node('operator', mainOperator, acc, curr);
+        return new Node('operator', operator, acc, curr);
     });
 
-    return optimizeAST(combinedAST);
+    // Optimize the AST
+    const optimizedAST = optimizeAST(combinedAST);
+
+    // Convert the AST back to a human-readable string
+    const ruleString = astToString(optimizedAST);
+
+    return { ast: optimizedAST, ruleString };
 };
+
 
 const countOperators = (node, count) => {
     if (!node) return;

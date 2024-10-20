@@ -9,6 +9,7 @@ This project implements a simple 3-tier rule engine application with a backend A
 - [API Endpoints](#api-endpoints)
 - [Running with Docker](#running-with-docker)
 - [API Usage Examples](#api-usage-examples)
+- [Testing](#testing)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -18,6 +19,7 @@ This project implements a simple 3-tier rule engine application with a backend A
 2. **MongoDB**: Chosen as the database for storing rules due to its flexibility with JSON-like documents, which aligns well with our AST structure.
 3. **Express.js**: Used as the web framework for creating our API endpoints due to its simplicity and wide adoption in the Node.js ecosystem.
 4. **Node.js**: Selected as the runtime environment for its event-driven, non-blocking I/O model, which is well-suited for building scalable network applications.
+5. **Rule Combination**: Rules can be combined using AND/OR operators, creating new rules without modifying existing ones.
 
 ## Dependencies
 
@@ -26,6 +28,12 @@ To run this application, you'll need:
 - Node.js (v14 or later)
 - npm (usually comes with Node.js)
 - MongoDB (v4.4 or later)
+
+Main npm packages:
+- express
+- mongoose
+- dotenv
+- swagger-ui-express (for API documentation)
 
 ## Setup Instructions
 
@@ -76,7 +84,7 @@ The server should now be running on `http://localhost:5000`.
    - Body: `{ "rules": ["ruleId1", "ruleId2"], "operator": "AND" }`
 
 4. Evaluate Rule:
-   - POST `/api/rules/evaluate`
+   - POST `/api/rules/evaluate/:ruleId`
    - Body: `{ "data": { "age": 35, "department": "Sales", "salary": 60000 } }`
 
 For detailed API documentation, visit `/api-docs` when the server is running.
@@ -139,12 +147,22 @@ curl -X POST http://localhost:5000/api/rules/combine \
   -d '{"rules": ["ruleId1", "ruleId2"], "operator": "AND"}'
 ```
 
-### Evaluate Rules
+### Evaluate Rule
 ```bash
-curl -X POST http://localhost:5000/api/rules/evaluate \
+curl -X POST http://localhost:5000/api/rules/evaluate/ruleId \
   -H "Content-Type: application/json" \
   -d '{"data": {"age": 35, "department": "Sales", "salary": 60000}}'
 ```
+
+## Testing
+
+To run the test suite:
+
+```
+npm test
+```
+
+This will run all unit and integration tests using Jest.
 
 ## Contributing
 
