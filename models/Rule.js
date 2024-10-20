@@ -1,29 +1,25 @@
-// models/Rule.js
 const mongoose = require('mongoose');
 
+// Schema for individual nodes in the Abstract Syntax Tree (AST)
 const NodeSchema = new mongoose.Schema({
     type: {
         type: String,
+        enum: ['operand', 'operator'],
         required: true
     },
     value: {
-        type: mongoose.Schema.Types.Mixed, // To store different types of values
+        type: mongoose.Schema.Types.Mixed,
         required: true
     },
-    left: {
-        type: mongoose.Schema.Types.Mixed, // Recursive object for left node
-        required: false
-    },
-    right: {
-        type: mongoose.Schema.Types.Mixed, // Recursive object for right node
-        required: false
-    }
+    left: this, // Reference to the left child node
+    right: this // Reference to the right child node
 }, { _id: false });
 
 const RuleSchema = new mongoose.Schema({
     ruleString: {
         type: String,
-        required: true
+        required: true,
+        index: true
     },
     ast: {
         type: NodeSchema,
@@ -34,5 +30,7 @@ const RuleSchema = new mongoose.Schema({
         default: Date.now
     }
 });
+
+RuleSchema.index({ ruleString: 1 }, { unique: true });
 
 module.exports = mongoose.model('Rule', RuleSchema);

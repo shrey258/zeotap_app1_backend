@@ -2,6 +2,16 @@
 
 This project implements a simple 3-tier rule engine application with a backend API that creates, combines, and evaluates rules represented as Abstract Syntax Trees (ASTs).
 
+## Table of Contents
+- [Design Choices](#design-choices)
+- [Dependencies](#dependencies)
+- [Setup Instructions](#setup-instructions)
+- [API Endpoints](#api-endpoints)
+- [Running with Docker](#running-with-docker)
+- [API Usage Examples](#api-usage-examples)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Design Choices
 
 1. **Abstract Syntax Tree (AST)**: Rules are represented as ASTs to allow for complex rule structures and efficient evaluation.
@@ -54,17 +64,22 @@ The server should now be running on `http://localhost:5000`.
 
 ## API Endpoints
 
-1. Create Rule:
+1. Get All Rules:
+   - GET `/api/rules`
+
+2. Create Rule:
    - POST `/api/rules/create`
    - Body: `{ "ruleString": "(age > 30 AND department = 'Sales') OR (salary > 50000)" }`
 
-2. Combine Rules:
+3. Combine Rules:
    - POST `/api/rules/combine`
    - Body: `{ "rules": ["ruleId1", "ruleId2"], "operator": "AND" }`
 
-3. Evaluate Rule:
+4. Evaluate Rule:
    - POST `/api/rules/evaluate`
-   - Body: `{ "ruleId": "someRuleId", "data": { "age": 35, "department": "Sales", "salary": 60000 } }`
+   - Body: `{ "data": { "age": 35, "department": "Sales", "salary": 60000 } }`
+
+For detailed API documentation, visit `/api-docs` when the server is running.
 
 ## Running with Docker
 
@@ -107,3 +122,40 @@ If you prefer to use Docker, follow these steps:
    ```
 
 The application should now be running in Docker containers.
+
+## API Usage Examples
+
+### Create a Rule
+```bash
+curl -X POST http://localhost:5000/api/rules/create \
+  -H "Content-Type: application/json" \
+  -d '{"ruleString": "(age > 30 AND department = \"Sales\") OR (salary > 50000)"}'
+```
+
+### Combine Rules
+```bash
+curl -X POST http://localhost:5000/api/rules/combine \
+  -H "Content-Type: application/json" \
+  -d '{"rules": ["ruleId1", "ruleId2"], "operator": "AND"}'
+```
+
+### Evaluate Rules
+```bash
+curl -X POST http://localhost:5000/api/rules/evaluate \
+  -H "Content-Type: application/json" \
+  -d '{"data": {"age": 35, "department": "Sales", "salary": 60000}}'
+```
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
